@@ -1,7 +1,7 @@
 /*
  * @Author: czx
  * @Date: 2022-05-22 10:45:03
- * @LastEditTime: 2022-05-22 16:16:26
+ * @LastEditTime: 2022-05-23 14:51:30
  * @LastEditors: czx
  * @Description:
  */
@@ -13,6 +13,7 @@ import c from 'classnames';
 import dayjs from 'dayjs';
 import durationFormat from '@/utils/durationFormat';
 import VirtualList from 'rc-virtual-list';
+import WeatherCard from './components/weather-card';
 
 const Record = memo(() => {
   const [state, setState] = useState({
@@ -21,9 +22,16 @@ const Record = memo(() => {
     start: false,
     startTime: '00:00:00',
     startTimeStamp: 0,
-    totalStudyMinutes: 0,
+    totalStudyMinutes: localStorage.getItem('studyTime'),
     timer: '',
   });
+  const [currentTime, setCurrentTime] = useState('');
+  useEffect(() => {
+    const Timer = setInterval(() => {
+      setCurrentTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
+    }, 1000);
+    return Timer;
+  }, []);
   const handleStart = () => {
     const startTimeStamp = dayjs().unix();
     setState({ ...state, start: true });
@@ -40,14 +48,15 @@ const Record = memo(() => {
 
   const handleEnd = () => {
     clearInterval(state.timer);
-    const currentStudyTotalTime = Math.floor(
-      (dayjs().unix() - state.startTimeStamp) / 60,
-    );
+    const currentStudyTotalTime =
+      Number(state.totalStudyMinutes) +
+      Math.floor((dayjs().unix() - state.startTimeStamp) / 60);
+    localStorage.setItem('studyTime', String(currentStudyTotalTime));
     setState({
       ...state,
       start: false,
       startTime: '00:00:00',
-      totalStudyMinutes: currentStudyTotalTime,
+      totalStudyMinutes: String(currentStudyTotalTime),
     });
   };
   const [data, setData] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
@@ -61,7 +70,7 @@ const Record = memo(() => {
   }, []);
 
   const onScroll = (e) => {
-    if (e.target.scrollHeight - e.target.scrollTop === 400) {
+    if (e.target.scrollHeight - e.target.scrollTop >= 300) {
       appendData();
     }
   };
@@ -95,14 +104,7 @@ const Record = memo(() => {
                 alignItems: 'center',
               }}
             >
-              <Card
-                title="今日学习"
-                style={{ width: '100%', textAlign: 'center' }}
-                className={Style.boxShadow}
-              >
-                <span className={Style.time}>{state.totalStudyMinutes}</span>
-                <span>分钟</span>
-              </Card>
+              <WeatherCard />
             </Col>
             <Col
               span={8}
@@ -113,12 +115,11 @@ const Record = memo(() => {
               }}
             >
               <Card
-                title="今日学习"
+                title="当前时间"
                 style={{ width: '100%', textAlign: 'center' }}
                 className={Style.boxShadow}
               >
-                <span className={Style.time}>{state.totalStudyMinutes}</span>
-                <span>分钟</span>
+                <span className={Style.time}>{currentTime}</span>
               </Card>
             </Col>
           </Row>
@@ -181,8 +182,8 @@ const Record = memo(() => {
               >
                 <VirtualList
                   data={data}
-                  height={400}
-                  itemHeight={47}
+                  height={300}
+                  itemHeight={40}
                   itemKey="email"
                   onScroll={onScroll}
                 >
